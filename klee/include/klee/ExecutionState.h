@@ -117,6 +117,8 @@ public:
   /// @brief Exploration depth, i.e., number of times KLEE branched for this state
   unsigned depth;
 
+  std::uint64_t pathSteps = 0;
+
   /// @brief History of complete path: represents branches taken to
   /// reach/create this state (both concrete and symbolic)
   TreeOStream pathOS;

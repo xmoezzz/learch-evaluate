@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-ARG NUM_MAKE_CORES=4
+ARG NUM_MAKE_CORES=8
 ARG WORK_DIR=/root
 ARG SOURCE_DIR=/root/learch/learch
 ARG SANDBOX_DIR=/tmp
