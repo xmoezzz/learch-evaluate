@@ -1715,20 +1715,30 @@ Function* Executor::getTargetFunction(Value *calledVal, ExecutionState &state) {
   }
 }
 
+#if LLVM_VERSION_MAJOR < 8
+#include "llvm/IR/CallSite.h"
+#endif
+
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
 
   if (state.prevPC && state.prevPC->inst && state.prevPC->inst->getParent() != i->getParent()) {
     state.pathSteps++;
   }
-  else if (auto *cb = dyn_cast<CallBase>(i)) {
-    const Function *cf = cb->getCalledFunction();
-    if (!cf || !cf->isDeclaration()) {
-      state.pathSteps++;
-    }
-  }
   else if (i->getOpcode() == Instruction::Ret) {
     state.pathSteps++;
+  }
+  else {
+    llvm::CallSite CS(i);
+    if (CS) {
+      if (llvm::Function *F = CS.getCalledFunction()) {
+        const llvm::Value *callee = CS.getCalledValue()->stripPointerCasts();
+        auto cf = llvm::dyn_cast<llvm::Function>(callee);
+        if (!cf || !cf->isDeclaration()) {
+          state.pathSteps++;
+        }
+      }
+    }
   }
 
   switch (i->getOpcode()) {
@@ -3643,7 +3653,7 @@ void Executor::terminateStateOnError(ExecutionState &state,
   // dump the steps on err
   std::string stepsPath = interpreterHandler->getOutputFilename("steps"); // matches current test prefix
   std::error_code ec;
-  llvm::raw_fd_ostream os(stepsPath, ec, llvm::sys::fs::OF_Text);
+  llvm::raw_fd_ostream os(stepsPath, ec, llvm::sys::fs::F_Text);
   if (!ec) {
     os << state.pathSteps << "\n";
     os.flush();
