@@ -3650,15 +3650,6 @@ void Executor::terminateStateOnError(ExecutionState &state,
   Instruction * lastInst;
   const InstructionInfo &ii = getLastNonKleeInternalInstruction(state, &lastInst);
 
-  // dump the steps on err
-  std::string stepsPath = interpreterHandler->getOutputFilename("steps"); // matches current test prefix
-  std::error_code ec;
-  llvm::raw_fd_ostream os(stepsPath, ec, llvm::sys::fs::F_Text);
-  if (!ec) {
-    os << state.pathSteps << "\n";
-    os.flush();
-  }
-
   if (EmitAllErrors ||
       emittedErrors.insert(std::make_pair(lastInst, message)).second) {
     if (ii.file != "") {
@@ -3668,6 +3659,15 @@ void Executor::terminateStateOnError(ExecutionState &state,
     }
     if (!EmitAllErrors)
       klee_message("NOTE: now ignoring this error at this location");
+
+    // dump the steps on err
+    std::string stepsPath = interpreterHandler->getOutputFilename("steps"); // matches current test prefix
+    std::error_code ec;
+    llvm::raw_fd_ostream os(stepsPath, ec, llvm::sys::fs::F_Text);
+    if (!ec) {
+      os << state.pathSteps << "\n";
+      os.flush();
+    }
 
     std::string MsgString;
     llvm::raw_string_ostream msg(MsgString);
