@@ -210,6 +210,12 @@ namespace {
                                  cl::desc("Link with UBSan runtime."),
                                  cl::init(false), cl::cat(LinkCat));
 
+  cl::opt<std::string> RuntimeBuild(
+      "runtime-build",
+      cl::desc("Link with versions of the runtime library that were built with "
+               "the provided configuration (default=" RUNTIME_CONFIGURATION
+               ")."),
+      cl::init(RUNTIME_CONFIGURATION), cl::cat(LinkCat));
   /*** Checks options ***/
 
   cl::OptionCategory ChecksCat("Checks options",
@@ -1389,6 +1395,18 @@ int main(int argc, char **argv, char **envp) {
                                   /*Optimize=*/OptimizeModule,
                                   /*CheckDivZero=*/CheckDivZero,
                                   /*CheckOvershift=*/CheckOvershift);
+
+  const std::string &module_triple = mainModule->getTargetTriple();
+                                    // Detect architecture
+  std::string opt_suffix = "64"; // Fall back to 64bit
+  if (module_triple.find("i686") != std::string::npos ||
+      module_triple.find("i586") != std::string::npos ||
+      module_triple.find("i486") != std::string::npos ||
+      module_triple.find("i386") != std::string::npos)
+    opt_suffix = "32";
+
+  // Add additional user-selected suffix
+  opt_suffix += "_" + RuntimeBuild.getValue();
 
   if (WithPOSIXRuntime) {
     SmallString<128> Path(Opts.LibraryDir);
