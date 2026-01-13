@@ -466,6 +466,11 @@ MLSearcher::MLSearcher(Executor &_executor, std::string model_type, std::string 
   PyGILState_STATE gstate = PyGILState_Ensure();
   PyObject *pName = PyUnicode_FromString("model");
   PyObject *pModule = PyImport_Import(pName);
+  if (pModule == NULL) {
+    PyErr_Print();
+    llvm::errs() << "Failed to load model module\n";
+    exit(1);
+  }
   if (model_type == "linear") {
     type = Linear;
   } else if (model_type == "feedforward") {
