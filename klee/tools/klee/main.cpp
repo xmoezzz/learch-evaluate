@@ -206,6 +206,16 @@ namespace {
                    cl::cat(LinkCat));
 
 
+  cl::opt<bool> WithUBSanRuntime("ubsan-runtime",
+                                 cl::desc("Link with UBSan runtime."),
+                                 cl::init(false), cl::cat(LinkCat));
+
+  cl::opt<std::string> RuntimeBuild(
+      "runtime-build",
+      cl::desc("Link with versions of the runtime library that were built with "
+               "the provided configuration (default=" RUNTIME_CONFIGURATION
+               ")."),
+      cl::init(RUNTIME_CONFIGURATION), cl::cat(LinkCat));
   /*** Checks options ***/
 
   cl::OptionCategory ChecksCat("Checks options",
@@ -1386,6 +1396,18 @@ int main(int argc, char **argv, char **envp) {
                                   /*CheckDivZero=*/CheckDivZero,
                                   /*CheckOvershift=*/CheckOvershift);
 
+  const std::string &module_triple = mainModule->getTargetTriple();
+                                    // Detect architecture
+  std::string opt_suffix = "64"; // Fall back to 64bit
+  if (module_triple.find("i686") != std::string::npos ||
+      module_triple.find("i586") != std::string::npos ||
+      module_triple.find("i486") != std::string::npos ||
+      module_triple.find("i386") != std::string::npos)
+    opt_suffix = "32";
+
+  // Add additional user-selected suffix
+  opt_suffix += "_" + RuntimeBuild.getValue();
+
   if (WithPOSIXRuntime) {
     SmallString<128> Path(Opts.LibraryDir);
     llvm::sys::path::append(Path, "libkleeRuntimePOSIX.bca");
@@ -1397,6 +1419,15 @@ int main(int argc, char **argv, char **envp) {
 
     std::string libcPrefix = (Libc == LibcType::UcLibc ? "__user_" : "");
     preparePOSIX(loadedModules, libcPrefix);
+  }
+
+  if (WithUBSanRuntime) {
+    SmallString<128> Path(Opts.LibraryDir);
+    llvm::sys::path::append(Path, "libkleeUBSan" + opt_suffix + ".bca");
+    if (!klee::loadFile(Path.c_str(), mainModule->getContext(), loadedModules,
+                        errorMsg))
+      klee_error("error loading UBSan support '%s': %s", Path.c_str(),
+                 errorMsg.c_str());
   }
 
   if (Libcxx) {
