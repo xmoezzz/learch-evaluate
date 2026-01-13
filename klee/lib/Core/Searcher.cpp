@@ -464,6 +464,8 @@ void GetFeaturesSearcher::update(klee::ExecutionState *current,
 MLSearcher::MLSearcher(Executor &_executor, std::string model_type, std::string model_path, bool _sampling) : executor(_executor), sampling(_sampling) {
   Py_Initialize();
   PyGILState_STATE gstate = PyGILState_Ensure();
+  PyRun_SimpleString("import sys");
+  PyRun_SimpleString("sys.path.append('/root/learch/learch')");
   PyObject *pName = PyUnicode_FromString("model");
   PyObject *pModule = PyImport_Import(pName);
   if (pModule == NULL) {
