@@ -3046,6 +3046,17 @@ bool Executor::getFeatureExtract() {
     return featureExtract;
 }
 
+void Executor::setSearcherPreModuleInfo(const llvm::Module *mainModule) {
+  for (const auto &F : *mainModule) {
+    std::string funcName = F.getName().str();
+    if (F.isDeclaration() || F.isIntrinsic() || F.empty()) {
+      DefinedFunctions[funcName] = false;
+    } else {
+      DefinedFunctions[funcName] = true;
+    }
+  }
+}
+
 void Executor::getSubpath(ExecutionState* state, subpath_ty &result, uint index) {
   result.clear();
 

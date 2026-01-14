@@ -127,6 +127,8 @@ public:
   // a user specified path. use null to reset.
   virtual void setReplayPath(const std::vector<bool> *path) = 0;
 
+  virtual void setSearcherPreModuleInfo(const llvm::Module *mainModule) = 0;
+
   // supply a set of symbolic bindings that will be used as "seeds"
   // for the search. use null to reset.
   virtual void useSeeds(const std::vector<struct KTest *> *seeds) = 0;

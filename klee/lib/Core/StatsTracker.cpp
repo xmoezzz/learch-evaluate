@@ -415,9 +415,9 @@ void StatsTracker::stepInstruction(ExecutionState &es) {
 
       if (currBasicBlock) {
         std::string currFuncName = currBasicBlock->getParent()->getName().str();
-        if ((CodeReader::get().definedFunctions.find(currFuncName) !=
-                 CodeReader::get().definedFunctions.end() &&
-             CodeReader::get().definedFunctions.at(currFuncName)) &&
+        if ((executor.DefinedFunctions.find(currFuncName) !=
+                 executor.DefinedFunctions.end() &&
+             executor.DefinedFunctions.at(currFuncName)) &&
             (addedVisitedDefinedLines.find(lineName) ==
                  addedVisitedDefinedLines.end() &&
              visitedDefinedLines.find(lineName) == visitedDefinedLines.end())) {
@@ -437,9 +437,9 @@ void StatsTracker::stepInstruction(ExecutionState &es) {
       }
 
       std::string currFuncName = currBasicBlock->getParent()->getName().str();
-      if ((CodeReader::get().definedFunctions.find(currFuncName) !=
-               CodeReader::get().definedFunctions.end() &&
-           CodeReader::get().definedFunctions.at(currFuncName)) &&
+      if ((executor.DefinedFunctions.find(currFuncName) !=
+               executor.DefinedFunctions.end() &&
+           executor.DefinedFunctions.at(currFuncName)) &&
           (addedVisitedDefinedBasicBlocks.find(currBasicBlock) ==
                addedVisitedDefinedBasicBlocks.end() &&
            visitedDefinedBasicBlocks.find(currBasicBlock) ==
@@ -450,7 +450,7 @@ void StatsTracker::stepInstruction(ExecutionState &es) {
       }
     }
   }
-  
+
   if (OutputIStats) {
     if (TrackInstructionTime) {
       static time::Point lastNowTime(time::getWallTime());

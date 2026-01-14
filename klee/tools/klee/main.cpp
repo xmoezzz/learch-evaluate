@@ -1534,6 +1534,8 @@ int main(int argc, char **argv, char **envp) {
   }
   handler->getInfoStream() << "PID: " << getpid() << "\n";
 
+  interpreter->setSearcherPreModuleInfo(mainModule);
+
   // Get the desired main function.  klee_main initializes uClibc
   // locale and other data and then calls main.
 

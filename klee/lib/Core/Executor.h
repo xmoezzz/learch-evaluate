@@ -136,6 +136,8 @@ private:
   InterpreterHandler *interpreterHandler;
   Searcher *searcher;
 
+  std::unordered_map<std::string, bool> DefinedFunctions;
+
   ExternalDispatcher *externalDispatcher;
   TimingSolver *solver;
   MemoryManager *memory;
@@ -493,6 +495,8 @@ public:
   void useSeeds(const std::vector<struct KTest *> *seeds) override {
     usingSeeds = seeds;
   }
+
+  void setSearcherPreModuleInfo(const llvm::Module *mainModule) override;
 
   void runFunctionAsMain(llvm::Function *f, int argc, char **argv,
                          char **envp) override;
