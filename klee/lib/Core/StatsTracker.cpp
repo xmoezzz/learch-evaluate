@@ -176,6 +176,8 @@ StatsTracker::StatsTracker(Executor &_executor, std::string _objectFilename,
     partialBranches(0),
     updateMinDistToUncovered(_updateMinDistToUncovered) {
 
+  const time::Span bcStatsWriteInterval(BCStatsWriteInterval);
+
   const time::Span statsWriteInterval(StatsWriteInterval);
   if (StatsWriteAfterInstructions > 0 && statsWriteInterval)
     klee_error("Both options --stats-write-interval and "
