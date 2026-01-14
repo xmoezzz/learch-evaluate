@@ -26,9 +26,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b3adf361-a9c3-4e68-9d57-b7e0b445f8cf" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/lib/Core/StatsTracker.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/Core/StatsTracker.cpp" afterDir="false" />
-    </list>
+    <list default="true" id="b3adf361-a9c3-4e68-9d57-b7e0b445f8cf" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -106,7 +104,7 @@
       <option name="presentableId" value="Default" />
       <updated>1760490424057</updated>
       <workItem from="1760490425099" duration="4612000" />
-      <workItem from="1768360872208" duration="740000" />
+      <workItem from="1768360872208" duration="803000" />
     </task>
     <servers />
   </component>

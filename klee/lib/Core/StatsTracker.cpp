@@ -349,6 +349,108 @@ void StatsTracker::done() {
 }
 
 void StatsTracker::stepInstruction(ExecutionState &es) {
+  if (OutputBCStats) {
+    auto getDebugInfoOfKInst = [](const klee::KInstIterator &kInstIter,
+                                  std::string &fileName,
+                                  unsigned int &lineNum) -> bool {
+      fileName = "";
+      lineNum = 0;
+
+      if (!kInstIter)
+        return false;
+      if (!kInstIter->info)
+        return false;
+
+      const klee::InstructionInfo &instInfo = *kInstIter->info;
+      fileName = instInfo.file;
+      lineNum = instInfo.line;
+
+      return true;
+    };
+
+    auto getBasicBlockOfKInst =
+        [](const klee::KInstIterator &kInstIter) -> const llvm::BasicBlock * {
+      if (kInstIter)
+        if (kInstIter->inst)
+          return kInstIter->inst->getParent();
+      return nullptr;
+    };
+
+    auto getBasicBlockName = [](const llvm::BasicBlock *bblock)
+        -> std::pair<std::string, std::size_t> {
+      if (!bblock)
+        return {std::string("null"), 0};
+      else {
+        const llvm::Function *func = bblock->getParent();
+        std::size_t bblockIndex = 0;
+        for (auto &BB : *func) {
+          if (bblock == &BB)
+            break;
+          else
+            ++bblockIndex;
+        }
+
+        return {func->getName().str(), bblockIndex};
+      }
+    };
+
+    bool resFlag = false;
+    std::string fileName;
+    unsigned int lineNum;
+    const llvm::BasicBlock *currBasicBlock = nullptr;
+    std::pair<std::string, std::size_t> bbName;
+
+    resFlag = getDebugInfoOfKInst(es.pc, fileName, lineNum);
+    currBasicBlock = getBasicBlockOfKInst(es.pc);
+    bbName = getBasicBlockName(currBasicBlock);
+
+    if (resFlag) {
+      std::string lineName = fileName + ":" + std::to_string(lineNum);
+
+      if (addedVisitedLines.find(lineName) == addedVisitedLines.end() &&
+          visitedLines.find(lineName) == visitedLines.end()) {
+        addedVisitedLines.emplace(lineName);
+        visitedLines.emplace(lineName);
+      }
+
+      if (currBasicBlock) {
+        std::string currFuncName = currBasicBlock->getParent()->getName().str();
+        if ((CodeReader::get().definedFunctions.find(currFuncName) !=
+                 CodeReader::get().definedFunctions.end() &&
+             CodeReader::get().definedFunctions.at(currFuncName)) &&
+            (addedVisitedDefinedLines.find(lineName) ==
+                 addedVisitedDefinedLines.end() &&
+             visitedDefinedLines.find(lineName) == visitedDefinedLines.end())) {
+
+          addedVisitedDefinedLines.emplace(lineName);
+          visitedDefinedLines.emplace(lineName);
+        }
+      }
+    }
+
+    if (currBasicBlock) {
+      if (addedVisitedBasicBlocks.find(currBasicBlock) ==
+              addedVisitedBasicBlocks.end() &&
+          visitedBasicBlocks.find(currBasicBlock) == visitedBasicBlocks.end()) {
+        addedVisitedBasicBlocks[currBasicBlock] = bbName;
+        visitedBasicBlocks[currBasicBlock] = bbName;
+      }
+
+      std::string currFuncName = currBasicBlock->getParent()->getName().str();
+      if ((CodeReader::get().definedFunctions.find(currFuncName) !=
+               CodeReader::get().definedFunctions.end() &&
+           CodeReader::get().definedFunctions.at(currFuncName)) &&
+          (addedVisitedDefinedBasicBlocks.find(currBasicBlock) ==
+               addedVisitedDefinedBasicBlocks.end() &&
+           visitedDefinedBasicBlocks.find(currBasicBlock) ==
+               visitedDefinedBasicBlocks.end())) {
+
+        addedVisitedDefinedBasicBlocks[currBasicBlock] = bbName;
+        visitedDefinedBasicBlocks[currBasicBlock] = bbName;
+      }
+    }
+  }
+  
   if (OutputIStats) {
     if (TrackInstructionTime) {
       static time::Point lastNowTime(time::getWallTime());
