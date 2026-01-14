@@ -68,6 +68,20 @@ cl::opt<bool> OutputIStats("output-istats", cl::init(true),
                                     "callgrind format (default=true)"),
                            cl::cat(StatsCat));
 
+  /// @brief [Empc]: Block coverage stats
+  cl::opt<bool> OutputBCStats(
+      "output-bc-stats", cl::init(true),
+      cl::desc(
+          "Write basic block coverage statistics periodically (default=true)"),
+      cl::cat(StatsCat));
+
+  /// @brief [Empc]: Interval
+  cl::opt<std::string> BCStatsWriteInterval(
+      "bc-stats-write-interval",
+      cl::desc(
+          "Approximate time between block coverage stats writes (default=1s)"),
+      cl::init("600s"), cl::cat(StatsCat));
+
 cl::opt<std::string> StatsWriteInterval(
     "stats-write-interval", cl::init("1s"),
     cl::desc("Approximate time between stats writes (default=1s)"),
@@ -217,6 +231,20 @@ StatsTracker::StatsTracker(Executor &_executor, std::string _objectFilename,
     }
   }
 
+
+  // [Empc]: Write bc-stats
+  if (OutputBCStats) {
+    bcStatsFile = executor.interpreterHandler->openOutputFile("run.bcstats");
+    if (bcStatsFile) {
+      if (bcStatsWriteInterval)
+        executor.timers.add(std::make_unique<Timer>(bcStatsWriteInterval,
+                                                    [&] { writeBCStats(); }));
+
+    } else {
+      klee_error("Unable to open block coverage stats file (run.bcstats).");
+    }
+  }
+
   if (OutputStats) {
     sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
     sqlite3_enable_shared_cache(0);
@@ -305,6 +333,10 @@ StatsTracker::~StatsTracker() {
 void StatsTracker::done() {
   if (statsFile)
     writeStatsLine();
+
+  if (OutputBCStats && bcStatsFile) {
+    writeBCStats();
+  }
 
   if (OutputIStats) {
     if (updateMinDistToUncovered)
@@ -747,6 +779,51 @@ void StatsTracker::writeIStats() {
   for (unsigned i=pos; i<istatsSize; ++i)
     of << '\n';
   
+  of.flush();
+}
+
+
+// [Empc]: definition
+void StatsTracker::writeBCStats() {
+  llvm::raw_fd_ostream &of = *bcStatsFile;
+
+  time::Span elapsedTime(klee::time::getWallTime() - startWallTime);
+  auto elapsedTimeCount = elapsedTime.toMicroseconds();
+  of << "\n\nTime: " << elapsedTimeCount / 1000000U << "."
+     << (elapsedTimeCount % 1000000U) / 100000U << " (s)\n\n";
+  of << "States: " << executor.states.size() << "\n";
+  of << "Memory: " << util::GetTotalMallocUsage() << "\n";
+  of << "All BB: " << visitedBasicBlocks.size() << "\n";
+  of << "Added BB: " << addedVisitedBasicBlocks.size() << "\n";
+  of << "All BB in Defined: " << visitedDefinedBasicBlocks.size() << "\n";
+  of << "Add BB in Defined: " << addedVisitedDefinedBasicBlocks.size() << "\n";
+  of << "All Lines: " << visitedLines.size() << "\n";
+  of << "Added Lines: " << addedVisitedLines.size() << "\n";
+  of << "All Lines in Defined: " << visitedDefinedLines.size() << "\n";
+  of << "Added Lines in Defined: " << addedVisitedDefinedLines.size() << "\n";
+  of << "-------- Added Basic Blocks --------\n";
+  for (const auto &addedBlockPair : addedVisitedBasicBlocks) {
+    of << addedBlockPair.second.first << "():" << addedBlockPair.second.second
+       << "\n";
+  }
+  of << "-------- Added Basic Blocks in Defined Functions --------\n";
+  for (const auto &addedBlockPair : addedVisitedDefinedBasicBlocks) {
+    of << addedBlockPair.second.first << "():" << addedBlockPair.second.second
+       << "\n";
+  }
+  of << "-------- Added Lines --------\n";
+  for (const auto &addedLine : addedVisitedLines) {
+    of << addedLine << "\n";
+  }
+  of << "-------- Added Lines in Defined Functions --------\n";
+  for (const auto &addedLine : addedVisitedDefinedLines) {
+    of << addedLine << "\n";
+  }
+  addedVisitedBasicBlocks.clear();
+  addedVisitedDefinedBasicBlocks.clear();
+  addedVisitedLines.clear();
+  addedVisitedDefinedLines.clear();
+
   of.flush();
 }
 

@@ -22,6 +22,9 @@
 #include <sqlite3.h>
 #include <string>
 
+#include <unordered_map>
+#include <unordered_set>
+
 namespace llvm {
   class BranchInst;
   class Function;
@@ -43,6 +46,41 @@ namespace klee {
 
     Executor &executor;
     std::string objectFilename;
+
+    std::unordered_map<const llvm::BasicBlock *,
+                   std::pair<std::string, std::size_t>> visitedBasicBlocks;
+
+    /// @brief [Empc]: The added visited basic blocks in this time interval
+    std::unordered_map<const llvm::BasicBlock *,
+                       std::pair<std::string, std::size_t>>
+        addedVisitedBasicBlocks;
+
+    /// @brief [Empc]: All the visited node lines
+    std::unordered_set<std::string> visitedLines;
+
+    /// @brief [Empc]: The added visited lines in this time interval
+    std::unordered_set<std::string> addedVisitedLines;
+
+    /// @brief [Empc]: All the visited basic blocks in defined functions
+    std::unordered_map<const llvm::BasicBlock *,
+                       std::pair<std::string, std::size_t>>
+        visitedDefinedBasicBlocks;
+
+    /// @brief [Empc]: The added visited basic blocks in defined functions in this
+    /// time interval
+    std::unordered_map<const llvm::BasicBlock *,
+                       std::pair<std::string, std::size_t>>
+        addedVisitedDefinedBasicBlocks;
+
+    /// @brief [Empc]: All the visited node lines in defined functions
+    std::unordered_set<std::string> visitedDefinedLines;
+
+    /// @brief [Empc]: The added visited lines in defined functions in this time
+    /// interval
+    std::unordered_set<std::string> addedVisitedDefinedLines;
+
+    /// @brief [Empc]: File handler for bc-stats
+    std::unique_ptr<llvm::raw_fd_ostream> bcStatsFile;
 
     std::unique_ptr<llvm::raw_fd_ostream> istatsFile;
     ::sqlite3 *statsFile = nullptr;
@@ -69,6 +107,8 @@ namespace klee {
     void writeStatsHeader();
     void writeStatsLine();
     void writeIStats();
+
+    void writeBCStats();
 
   public:
     StatsTracker(Executor &_executor, std::string _objectFilename,
