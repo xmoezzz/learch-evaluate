@@ -579,7 +579,11 @@ void KleeHandler::processTestCase(const ExecutionState &state,
       if (state.coveredNew) {
         std::stringstream filename;
         filename << "test" << std::setfill('0') << std::setw(6) << id << ".covnew";
+        llvm::errs() << "[learch] writing new coverage : " << filename.str() << "\n";
         FILE *f = fopen(getOutputFilename(filename.str()).c_str(), "w");
+        if (!f) {
+          llvm::errs() << "[learch] failed to open " << filename.str() << " for writing new coverage\n";
+        }
         fclose(f);
       }
 
