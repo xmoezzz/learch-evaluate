@@ -583,7 +583,7 @@ void KleeHandler::processTestCase(const ExecutionState &state,
         FILE *f = fopen(getOutputFilename(filename.str()).c_str(), "w");
         if (!f) {
           llvm::errs() << "[learch] failed to open " << filename.str() << " for writing new coverage\n";
-          llvm::errs() << "[learch] fclose failed: path=" << path
+          llvm::errs() << "[learch] fclose failed: "
                    << " errno=" << errno
                    << " (" << strerror(errno) << ")\n";
         }
