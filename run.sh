@@ -1,1 +1,1 @@
-docker build -t xmoe/learch:latest .
+docker build -t learch:latest .
